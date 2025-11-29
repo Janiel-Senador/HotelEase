@@ -14,6 +14,8 @@
         .nav-item.active { background: #6b3410; border-left: 3px solid #3498db; }
         .main-content { flex: 1; padding: 30px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .brand { display:flex; align-items:center; gap:8px; font-weight:700; color:#8B4513 }
+        .brand .logo{ width:22px; height:22px; object-fit:contain }
         .header h1 { font-size: 24px; color: #2c3e50; }
         .header-date { display: flex; align-items: center; gap: 10px; color: #7f8c8d; font-size: 14px; }
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }
@@ -61,196 +63,163 @@
             <span>📅</span>
             <span>Reservations</span>
         </div>
+        <a href="{{ route('admin.room_management') }}" class="nav-item">
+            <span>🛎️</span>
+            <span>Room Management</span>
+        </a>
     </div>
 
     <div class="main-content">
         <div class="header">
+            <div class="brand"><img src="/logo.png" alt="Logo" class="logo"> HotelEase</div>
             <h1>Hotel Management Dashboard</h1>
             <div class="header-date">
                 <span id="currentDate">Today: Dec 20, 2024</span>
             </div>
         </div>
-
+        @php
+            $today = \Illuminate\Support\Carbon::today();
+            $pendingCount = \App\Models\Booking::where('status','pending')->count();
+            $todayCheckins = \App\Models\Booking::whereDate('check_in_date', $today)->where('status', 'confirmed')->count();
+            $totalRoomsLimit = config('hotel.room_limit');
+            $totalRooms = \App\Models\Room::count();
+            $occupiedRooms = \App\Models\Booking::where('status','confirmed')->count();
+            $denom = $totalRoomsLimit ?: $totalRooms;
+            $occupancyRate = $denom ? round(($occupiedRooms / $denom) * 100) : 0;
+            $todayRevenue = \App\Models\Booking::whereDate('check_in_date',$today)->where('status','confirmed')->with('room')->get()->sum(function($b){
+                $n = \Illuminate\Support\Carbon::parse($b->check_in_date)->diffInDays(\Illuminate\Support\Carbon::parse($b->check_out_date));
+                $price = optional($b->room)->price ?? 0;
+                $subtotal = $n * $price;
+                $tax = round($subtotal * 0.12);
+                return $subtotal + $tax;
+            });
+        @endphp
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Today's Check-ins</div>
-                <div class="stat-value" id="todayCheckins">0</div>
+                <div class="stat-value" id="todayCheckins">{{ $todayCheckins }}</div>
                 <div class="stat-icon icon-red">🏨</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Occupancy Rate</div>
-                <div class="stat-value" id="occupancyRate">0%</div>
+                <div class="stat-value" id="occupancyRate">{{ $occupancyRate }}%</div>
                 <div class="stat-icon icon-green">✓</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Today's Revenue</div>
-                <div class="stat-value" id="todayRevenue">₱0</div>
+                <div class="stat-value" id="todayRevenue">₱{{ number_format($todayRevenue, 0) }}</div>
                 <div class="stat-icon icon-yellow">💰</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Pending Requests</div>
-                <div class="stat-value" id="pendingCount">0</div>
+                <div class="stat-value" id="pendingCount">{{ $pendingCount }}</div>
                 <div class="stat-icon icon-blue">🔔</div>
             </div>
         </div>
-
         <div class="content-grid">
             <div class="card">
                 <div class="card-title">Occupancy Rate</div>
+                @php
+                    $series = [];
+                    $labels = [];
+                    for($i=6;$i>=0;$i--){
+                        $date = \Illuminate\Support\Carbon::today()->subDays($i);
+                        $active = \App\Models\Booking::where('status','confirmed')
+                            ->whereDate('check_in_date','<=',$date)
+                            ->whereDate('check_out_date','>=',$date)
+                            ->count();
+                        $series[] = $denom ? min(round(($active / $denom) * 100), 100) : 0;
+                        $labels[] = $date->format('D');
+                    }
+                @endphp
                 <div class="chart-container">
                     <svg class="chart-svg" id="occupancyChart"></svg>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">Pending Requests</div>
-                <div id="pendingRequestsList">
+                @php($pending = \App\Models\Booking::where('status','pending')->with('room')->orderByDesc('id')->get())
+                @if($pending->isEmpty())
                     <div class="empty-state">No pending requests</div>
-                </div>
+                @else
+                    @foreach($pending as $b)
+                        <div class="request-item">
+                            <div class="request-info">
+                                <h4>{{ $b->guest_name }} - {{ optional($b->room)->number }} ({{ optional($b->room)->type }})</h4>
+                                <p>{{ $b->check_in_date }} → {{ $b->check_out_date }} • {{ $b->status }} • {{ $b->payment_method }}</p>
+                            </div>
+                            <div class="request-actions">
+                                <form method="POST" action="{{ route('booking.accept', $b) }}">
+                                    @csrf
+                                    <button class="request-btn btn-accept" type="submit">Accept</button>
+                                </form>
+                                <form method="POST" action="{{ route('booking.cancel', $b) }}">
+                                    @csrf
+                                    <button class="request-btn btn-cancel" type="submit">Cancel</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-title">Room Management</div>
-            <div class="room-table" id="roomTable">
-                <div class="table-header">
-                    <div>Room</div>
-                    <div>Type</div>
-                    <div>Status</div>
-                    <div>Guest</div>
-                    <div>Check-out</div>
-                    <div>Actions</div>
+            <div class="card">
+                <div class="card-title">Confirmed Bookings</div>
+                @php($confirmed = \App\Models\Booking::where('status','confirmed')->with('room')->orderByDesc('id')->get())
+                <div class="room-table">
+                    <div class="table-header">
+                        <div>Room</div>
+                        <div>Type</div>
+                        <div>Status</div>
+                        <div>Guest</div>
+                        <div>Check-out</div>
+                        <div>Actions</div>
+                    </div>
+                    @if($confirmed->isEmpty())
+                        <div class="empty-state">No confirmed bookings</div>
+                    @else
+                        @foreach($confirmed as $b)
+                            <div class="table-row">
+                                <div>{{ optional($b->room)->number }}</div>
+                                <div>{{ optional($b->room)->type }}</div>
+                                <div><span class="status-badge status-occupied">Occupied</span></div>
+                                <div>{{ $b->guest_name }}</div>
+                                <div>{{ $b->check_out_date }}</div>
+                                <div class="table-actions">
+                                    <a class="action-btn" href="{{ route('dbarea') }}" title="View">👁️</a>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
-                <div class="empty-state">No confirmed bookings</div>
             </div>
         </div>
     </div>
-
+    <script type="application/json" id="seriesData">@json($series)</script>
+    <script type="application/json" id="labelsData">@json($labels)</script>
     <script>
-        function initStorage() {
-            if (!localStorage.getItem('hotelBookings')) {
-                localStorage.setItem('hotelBookings', JSON.stringify([]));
-            }
-            if (!localStorage.getItem('pendingBookings')) {
-                localStorage.setItem('pendingBookings', JSON.stringify([]));
-            }
-            if (!localStorage.getItem('confirmedBookings')) {
-                localStorage.setItem('confirmedBookings', JSON.stringify([]));
-            }
-        }
-        function loadPendingBookings() { return JSON.parse(localStorage.getItem('pendingBookings') || '[]'); }
-        function loadConfirmedBookings() { return JSON.parse(localStorage.getItem('confirmedBookings') || '[]'); }
-        function savePendingBookings(bookings) { localStorage.setItem('pendingBookings', JSON.stringify(bookings)); }
-        function saveConfirmedBookings(bookings) { localStorage.setItem('confirmedBookings', JSON.stringify(bookings)); }
-        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); const month = date.toLocaleString('default', { month: 'short' }); const day = date.getDate(); return `${month} ${day}`; }
-        function extractPrice(priceStr) { if (!priceStr) return 0; return parseFloat(priceStr.replace(/[₱,]/g, '')) || 0; }
-        function displayPendingRequests() {
-            const pending = loadPendingBookings();
-            const container = document.getElementById('pendingRequestsList');
-            if (pending.length === 0) { container.innerHTML = '<div class="empty-state">No pending requests</div>'; return; }
-            let html = '';
-            pending.forEach((booking, index) => {
-                html += `
-                    <div class="request-item">
-                        <div class="request-info">
-                            <h4>${booking.guest?.name || 'Guest'} - ${booking.room}</h4>
-                            <p>${formatDate(booking.checkin)} → ${formatDate(booking.checkout)} • ${booking.nights} nights • ${booking.total}</p>
-                        </div>
-                        <div class="request-actions">
-                            <button class="request-btn btn-accept" onclick="acceptBooking(${index})">Accept</button>
-                            <button class="request-btn btn-cancel" onclick="cancelBooking(${index})">Cancel</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        function displayConfirmedBookings() {
-            const confirmed = loadConfirmedBookings();
-            const table = document.getElementById('roomTable');
-            let html = `
-                <div class="table-header">
-                    <div>Room</div>
-                    <div>Type</div>
-                    <div>Status</div>
-                    <div>Guest</div>
-                    <div>Check-out</div>
-                    <div>Actions</div>
-                </div>
-            `;
-            if (confirmed.length === 0) { html += '<div class="empty-state">No confirmed bookings</div>'; }
-            else {
-                confirmed.forEach((booking, index) => {
-                    html += `
-                        <div class="table-row">
-                            <div>${booking.roomNumber || 'N/A'}</div>
-                            <div>${booking.room || 'Standard'}</div>
-                            <div><span class="status-badge status-occupied">Occupied</span></div>
-                            <div>${booking.guest?.name || 'Guest'}</div>
-                            <div>${formatDate(booking.checkout)}</div>
-                            <div class="table-actions">
-                                <button class="action-btn" onclick="viewBooking(${index})" title="View Details">👁️</button>
-                                <button class="action-btn" onclick="deleteConfirmedBooking(${index})" title="Delete">🗑️</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            table.innerHTML = html;
-        }
-        function acceptBooking(index) {
-            const pending = loadPendingBookings();
-            const confirmed = loadConfirmedBookings();
-            if (index < 0 || index >= pending.length) return;
-            const booking = pending[index];
-            if (!booking.roomNumber) { booking.roomNumber = Math.floor(Math.random() * 400) + 101; }
-            booking.acceptedAt = new Date().toISOString(); booking.status = 'confirmed';
-            confirmed.push(booking); pending.splice(index, 1);
-            savePendingBookings(pending); saveConfirmedBookings(confirmed);
-            refreshDashboard();
-            alert(`Booking accepted for ${booking.guest?.name}!\nRoom ${booking.roomNumber} assigned.`);
-        }
-        function cancelBooking(index) {
-            if (!confirm('Are you sure you want to cancel this booking request?')) return;
-            const pending = loadPendingBookings();
-            if (index < 0 || index >= pending.length) return;
-            pending.splice(index, 1); savePendingBookings(pending);
-            refreshDashboard();
-            alert('Booking cancelled.');
-        }
-        function viewBooking(index) {
-            const confirmed = loadConfirmedBookings();
-            if (index < 0 || index >= confirmed.length) return;
-            const booking = confirmed[index];
-            alert(`Booking Details:\n\nRoom: ${booking.roomNumber} - ${booking.room}\nGuest: ${booking.guest?.name}\nEmail: ${booking.guest?.email}\nPhone: ${booking.guest?.phone || 'N/A'}\nCheck-in: ${booking.checkin}\nCheck-out: ${booking.checkout}\nNights: ${booking.nights}\nTotal: ${booking.total}\nPayment Method: ${booking.paymentMethod || 'N/A'}\nSpecial Requests: ${booking.guest?.requests || 'None'}`);
-        }
-        function deleteConfirmedBooking(index) { if (!confirm('Are you sure you want to delete this booking?')) return; const confirmed = loadConfirmedBookings(); confirmed.splice(index, 1); saveConfirmedBookings(confirmed); refreshDashboard(); }
-        function updateStats() {
-            const pending = loadPendingBookings(); const confirmed = loadConfirmedBookings(); const today = new Date().toISOString().split('T')[0];
-            document.getElementById('pendingCount').textContent = pending.length;
-            const todayCheckins = confirmed.filter(b => b.checkin === today).length; document.getElementById('todayCheckins').textContent = todayCheckins;
-            let todayRevenue = 0; confirmed.forEach(booking => { if (booking.checkin === today) { todayRevenue += extractPrice(booking.total); } }); document.getElementById('todayRevenue').textContent = '₱' + todayRevenue.toLocaleString();
-            const totalRooms = 50; const occupiedRooms = confirmed.length; const occupancyRate = Math.round((occupiedRooms / totalRooms) * 100); document.getElementById('occupancyRate').textContent = occupancyRate + '%';
-            const now = new Date(); document.getElementById('currentDate').textContent = 'Today: ' + now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        }
-        function updateChart() {
-            const confirmed = loadConfirmedBookings(); const data = []; const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; const today = new Date();
-            for (let i = 6; i >= 0; i--) { const date = new Date(today); date.setDate(date.getDate() - i); const dateStr = date.toISOString().split('T')[0]; const activeBookings = confirmed.filter(b => { return b.checkin <= dateStr && b.checkout >= dateStr; }).length; const occupancy = Math.min(Math.round((activeBookings / 50) * 100), 100); data.push(occupancy); }
-            drawChart(data, days);
-        }
-        function drawChart(data = [0,0,0,0,0,0,0], days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']) {
-            const svg = document.getElementById('occupancyChart'); const width = svg.clientWidth; const height = svg.clientHeight; const padding = 40; const chartWidth = width - padding * 2; const chartHeight = height - padding * 2; svg.innerHTML = ''; svg.innerHTML += `<line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#e0e0e0" stroke-width="1"/>`;
-            const points = data.map((value,i)=>{ const x = padding + (chartWidth / (data.length - 1)) * i; const y = height - padding - (value / 100) * chartHeight; return { x, y, value }; }); let pathData = `M ${points[0].x} ${points[0].y}`; for (let i = 1; i < points.length; i++) { pathData += ` L ${points[i].x} ${points[i].y}`; } svg.innerHTML += `<path d="${pathData}" stroke="#3498db" stroke-width="2" fill="none"/>`; points.forEach((point,i)=>{ svg.innerHTML += `<circle cx="${point.x}" cy="${point.y}" r="4" fill="#3498db"/>`; svg.innerHTML += `<text x="${point.x}" y="${height - 10}" text-anchor="middle" font-size="11" fill="#7f8c8d">${days[i]}</text>`; }); for (let i = 0; i <= 100; i += 20) { const y = height - padding - (i / 100) * chartHeight; svg.innerHTML += `<text x="10" y="${y + 4}" font-size="11" fill="#7f8c8d">${i}</text>`; }
-        }
-        function refreshDashboard() { displayPendingRequests(); displayConfirmedBookings(); updateStats(); updateChart(); }
-        function checkForNewBookings() {
-            const allBookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]'); const pending = loadPendingBookings();
-            allBookings.forEach(booking => { const exists = pending.find(p => p.checkin === booking.checkin && p.checkout === booking.checkout && p.guest?.email === booking.guest?.email ); if (!exists) { booking.status = 'pending'; pending.push(booking); } }); savePendingBookings(pending); localStorage.setItem('hotelBookings', JSON.stringify([])); refreshDashboard();
-        }
-        function initDashboard() { initStorage(); checkForNewBookings(); refreshDashboard(); setInterval(checkForNewBookings, 3000); setInterval(refreshDashboard, 5000); window.addEventListener('resize', updateChart); }
-        document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', function() { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); this.classList.add('active'); }); });
-        initDashboard();
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const data = JSON.parse(document.getElementById('seriesData').textContent);
+        const days = JSON.parse(document.getElementById('labelsData').textContent);
+        const svg = document.getElementById('occupancyChart');
+        const width = svg.clientWidth || 600;
+        const height = svg.clientHeight || 200;
+        const padding = 40;
+        const chartWidth = width - padding * 2;
+        const chartHeight = height - padding * 2;
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.innerHTML = '';
+        svg.innerHTML += `<line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#e0e0e0" stroke-width="1"/>`;
+        const points = data.map((v,i)=>{ const x = padding + (chartWidth / (data.length - 1)) * i; const y = height - padding - (v / 100) * chartHeight; return {x,y}; });
+        let path = `M ${points[0].x} ${points[0].y}`;
+        for(let i=1;i<points.length;i++){ path += ` L ${points[i].x} ${points[i].y}`; }
+        svg.innerHTML += `<path d="${path}" stroke="#3498db" stroke-width="2" fill="none"/>`;
+        points.forEach((p,i)=>{
+            svg.innerHTML += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#3498db"/>`;
+            svg.innerHTML += `<text x="${p.x}" y="${height - 10}" text-anchor="middle" font-size="11" fill="#7f8c8d">${days[i]}</text>`;
+        });
+        for(let i=0;i<=100;i+=20){ const y = height - padding - (i / 100) * chartHeight; svg.innerHTML += `<text x="10" y="${y + 4}" font-size="11" fill="#7f8c8d">${i}</text>`; }
     </script>
 </body>
 </html>
-

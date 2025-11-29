@@ -16,10 +16,12 @@ class RoomSeeder extends Seeder
         Room::query()->delete();
 
         $rooms = [
-            ['number' => '101', 'type' => 'standard', 'capacity' => 2, 'price' => 79.99, 'status' => 'available'],
-            ['number' => '102', 'type' => 'standard', 'capacity' => 2, 'price' => 79.99, 'status' => 'available'],
-            ['number' => '201', 'type' => 'deluxe', 'capacity' => 3, 'price' => 119.99, 'status' => 'available'],
-            ['number' => '301', 'type' => 'suite', 'capacity' => 4, 'price' => 199.99, 'status' => 'maintenance'],
+            ['number' => 'STD-001', 'type' => 'Standard Room', 'capacity' => 2, 'price' => 1500, 'status' => 'available'],
+            ['number' => 'DLX-001', 'type' => 'Deluxe Room', 'capacity' => 2, 'price' => 1760, 'status' => 'available'],
+            ['number' => 'EXE-001', 'type' => 'Executive Suite', 'capacity' => 3, 'price' => 6000, 'status' => 'available'],
+            ['number' => 'PRM-001', 'type' => 'Premium Suite', 'capacity' => 3, 'price' => 3700, 'status' => 'available'],
+            ['number' => 'FAM-001', 'type' => 'Family Room', 'capacity' => 4, 'price' => 1100, 'status' => 'available'],
+            ['number' => 'PNT-001', 'type' => 'Penthouse Suite', 'capacity' => 4, 'price' => 9800, 'status' => 'available'],
         ];
 
         foreach ($rooms as $r) {

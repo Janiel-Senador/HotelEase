@@ -28,6 +28,13 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
+        $limit = (int) config('hotel.room_limit', 50);
+        if (Room::count() >= $limit) {
+            return response()->json([
+                'message' => 'Room limit reached',
+                'limit' => $limit,
+            ], 422);
+        }
         $data = $request->validate([
             'number' => 'required|string|max:50|unique:rooms,number',
             'type' => 'required|string|max:50',

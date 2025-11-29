@@ -13,6 +13,7 @@
         .topbar{ background:var(--brown); padding:14px 0; }
         .topbar .nav-inner{ max-width:1100px; margin:0 auto; display:flex; align-items:center; gap:20px; padding:0 16px; }
         .topbar .brand{ font-weight:700; color:#fff; display:flex; align-items:center; gap:8px; font-size:16px; }
+        .brand .logo{ width:22px; height:22px; object-fit:contain }
         .top-links{ margin-left:auto; display:flex; gap:20px; align-items:center; }
         .top-links a{ color:#fff; text-decoration:none; font-size:15px; transition:opacity 0.3s; }
         .top-links a:hover{ opacity:0.8; }
@@ -51,7 +52,7 @@
     <div class="nav-indicator" aria-hidden></div>
     <div class="topbar">
         <div class="nav-inner">
-        <a href="{{ route('home') }}" style="text-decoration: none;"><div class="brand">🏨 HotelEase</div></a>
+        <a href="{{ route('home') }}" style="text-decoration: none;"><div class="brand"><img src="/logo.png" alt="Logo" class="logo"> HotelEase</div></a>
         <nav class="top-links" aria-label="Main">
             <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('book') }}">Booking</a>
@@ -229,4 +230,3 @@
     </footer>
 </body>
 </html>
-

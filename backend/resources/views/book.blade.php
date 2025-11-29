@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <title>Booking - Hotelbase</title>
 <style>
   :root{ --brown:#8B4513;--light-brown:#8B6F47;--muted:#f4f4f6;--card:#fff; --radius:8px;font-family:Arial,Helvetica,sans-serif;color:#333; }
@@ -13,6 +14,7 @@
   .topbar{ background:var(--brown); padding:14px 0; }
   .topbar .nav-inner{ max-width:1100px; margin:0 auto; display:flex; align-items:center; gap:20px; padding:0 16px; }
   .topbar .brand{ font-weight:700; color:#fff; display:flex; align-items:center; gap:8px; font-size:16px; }
+  .brand .logo{ width:22px; height:22px; object-fit:contain }
   .top-links{ margin-left:auto; display:flex; gap:50px; align-items:center; }
   .top-links a{ color:#fff; text-decoration:none; font-size:15px; transition:opacity 0.3s; }
   .top-links a:hover{ opacity:0.8; }
@@ -53,7 +55,7 @@
   <div class="nav-indicator" aria-hidden></div>
   <div class="topbar">
     <div class="nav-inner">
-      <a href="{{ route('home') }}" style="text-decoration: none;"><div class="brand">🏨 HotelEase</div></a>
+      <a href="{{ route('home') }}" style="text-decoration: none;"><div class="brand"><img src="/logo.png" alt="Logo" class="logo"> HotelEase</div></a>
       <nav class="top-links" aria-label="Main">
         <a href="{{ route('home') }}">Home</a>
         <a href="{{ route('book') }}" class="active">Booking</a>
@@ -213,6 +215,23 @@
   </aside>
 </main>
 
+<script type="application/json" id="roomsJson">@json($rooms->map(function($r){ return ['id'=>$r->id,'type'=>$r->type,'price'=>$r->price]; })->values())</script>
+
+<div id="submitOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:24px;width:92%;max-width:520px;text-align:center">
+    <h2 style="margin:0 0 6px;color:#8B4513">Booking Submitted</h2>
+    <div style="color:#666;margin-bottom:16px">Thank You for trusting HotelEase</div>
+    <div id="receiptHint" style="color:#666;margin-bottom:12px"></div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <a id="homeBtn" class="btn" style="background:#8B4513;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none" href="{{ route('home') }}">Home</a>
+      <a id="receiptBtn" class="btn" style="background:#fff;color:#8B4513;border:1px solid #d6c3b5;padding:10px 16px;border-radius:8px;text-decoration:none" href="#" target="_blank">Check Receipt</a>
+    </div>
+  </div>
+  <style>
+    .btn{cursor:pointer}
+  </style>
+</div>
+
 <footer id="contact" style="background-color:#8B6F47;color:white;padding:40px 20px;text-align:center">
   <div class="footer-content" style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:30px;text-align:left">
     <div class="footer-section">
@@ -246,20 +265,21 @@
 </footer>
 
 <script>
-const rooms = [
-  {id:'Standard Room',price:1500,desc:'Comfortable room for 1-2 guests',image:'/StandardRoom.png'},
-  {id:'Deluxe Room',price:1760,desc:'Premium furnishings & city view',image:'/Delux.png'},
-  {id:'Executive Suite',price:6000,desc:'Separate living area & premium amenities',image:'/Executive.png'},
-  {id:'Premium Suite',price:3700,desc:'Panoramic views & exclusive services',image:'/Premium.png'},
-  {id:'Family Room',price:1100,desc:'Spacious rooms for families',image:'/Family.png'},
-  {id:'Penthouse Suite',price:9800,desc:'Top-floor luxury & concierge',image:'/Penthouse.png'}
-];
+const rooms = JSON.parse(document.getElementById('roomsJson').textContent);
+const roomInfo = {
+  'Standard Room': { desc: 'Comfortable room for 1-2 guests', image: '/StandardRoom.png' },
+  'Deluxe Room': { desc: 'Premium furnishings & city view', image: '/Delux.png' },
+  'Executive Suite': { desc: 'Separate living area & premium amenities', image: '/Executive.png' },
+  'Premium Suite': { desc: 'Panoramic views & exclusive services', image: '/Premium.png' },
+  'Family Room': { desc: 'Spacious rooms for families', image: '/Family.png' },
+  'Penthouse Suite': { desc: 'Top-floor luxury & concierge', image: '/Penthouse.png' },
+};
 let state = {step:1,selected: null,checkin:null,checkout:null,guests:1,guestInfo:{},pm:'card'};
 function $(s){return document.querySelector(s)}
-function populateRooms(){ const list = $('#roomsList'); list.innerHTML=''; rooms.forEach(r=>{ const div = document.createElement('div'); div.className='room-item'; div.innerHTML = `<img alt="${r.id}" src="${r.image}" /><div class=\"room-meta\"><h4>${r.id}</h4><p>${r.desc}</p></div>
+function populateRooms(){ const list = $('#roomsList'); list.innerHTML=''; rooms.forEach(r=>{ const info = roomInfo[r.type] || { desc: '', image: '/StandardRoom.png' }; const div = document.createElement('div'); div.className='room-item'; div.innerHTML = `<img alt="${r.type}" src="${info.image}" /><div class=\"room-meta\"><h4>${r.type}</h4><p>${info.desc}</p></div>
       <div style=\"text-align:right\"><div class=\"muted\">₱${r.price}/night</div>
-      <div style=\"margin-top:8px\"><button class=\"select-room\" data-id=\"${r.id}\" data-price=\"${r.price}\">Select</button></div></div>`; list.appendChild(div); }); list.querySelectorAll('.select-room').forEach(btn=>{ btn.addEventListener('click',()=> { const id=btn.dataset.id; const price=+btn.dataset.price; selectRoom(id,price); }); }); }
-function selectRoom(id,price){ const room = rooms.find(r => r.id === id); state.selected={id,price,image:room?.image||''}; $('#summaryRoom').textContent = id; $('#summaryImage').src = state.selected.image; updateSummary(); document.querySelectorAll('.room-item').forEach(it => it.style.borderColor='#eee'); const btn = document.querySelector(`.select-room[data-id="${id}"]`); if(btn) btn.closest('.room-item').style.borderColor='rgba(139,69,19,0.9)'; updateProceedButtonState(); }
+      <div style=\"margin-top:8px\"><button class=\"select-room\" data-id=\"${r.id}\" data-label=\"${r.type}\" data-price=\"${r.price}\">Select</button></div></div>`; list.appendChild(div); }); list.querySelectorAll('.select-room').forEach(btn=>{ btn.addEventListener('click',()=> { const id=+btn.dataset.id; const price=+btn.dataset.price; const label=btn.dataset.label; selectRoom({id,price,label}); }); }); }
+function selectRoom(sel){ const room = rooms.find(r => r.id === sel.id); state.selected={id:sel.id,label:sel.label,price:sel.price,image:room?.image||''}; $('#summaryRoom').textContent = sel.label; $('#summaryImage').src = state.selected.image; updateSummary(); document.querySelectorAll('.room-item').forEach(it => it.style.borderColor='#eee'); const btn = document.querySelector(`.select-room[data-id="${sel.id}"]`); if(btn) btn.closest('.room-item').style.borderColor='rgba(139,69,19,0.9)'; updateProceedButtonState(); }
 function nightsBetween(ci,co){ if(!ci||!co) return 0; const a=new Date(ci), b=new Date(co); const diff=(b-a)/(1000*60*60*24); return diff>0?diff:0; }
 function updateSummary(){ const nights = nightsBetween(state.checkin,state.checkout); $('#nights').textContent = nights; const price = state.selected ? state.selected.price : 0; $('#roomPrice').textContent = `₱${price}/night`; const subtotal = nights * price; const taxes = Math.round(subtotal * 0.12); $('#taxes').textContent = `₱${taxes}`; $('#total').textContent = `₱${(subtotal + taxes).toLocaleString()}`; $('#summaryDates').textContent = state.checkin && state.checkout ? `${state.checkin} → ${state.checkout}` : 'Select dates'; updateProceedButtonState(); }
 function canProceedToPayment(){ const ci = $('#checkin').value, co = $('#checkout').value; if(!ci || !co) return false; if(nightsBetween(ci,co) <= 0) return false; if(!state.selected) return false; const name = $('#fullname').value ? $('#fullname').value.trim() : ''; const email = $('#email').value ? $('#email').value.trim() : ''; if(!name || !email) return false; return true; }
@@ -270,12 +290,34 @@ function nextFromStep1(){ const ci = $('#checkin').value, co = $('#checkout').va
 function validateGuest(){ const name=$('#fullname').value.trim(), email=$('#email').value.trim(), phone=$('#phone').value.trim(); if(!name||!email){alert('Please enter name and email.');return} state.guestInfo={name,email,phone,requests:$('#requests').value.trim()}; goTo(3); }
 function proceedToPayment(){ const ci = $('#checkin').value, co = $('#checkout').value; if(!ci || !co){ alert('Please choose check-in and check-out dates before proceeding.'); goTo(1); return; } if(nightsBetween(ci,co) <= 0){ alert('Check-out must be after check-in.'); goTo(1); return; } if(!state.selected){ alert('Please select a room from the available rooms before proceeding.'); goTo(1); return; } const name = $('#fullname').value ? $('#fullname').value.trim() : ''; const email = $('#email').value ? $('#email').value.trim() : ''; if(!name || !email){ alert('Please enter guest name and email before proceeding to payment.'); goTo(2); return; } state.checkin = ci; state.checkout = co; state.guests = $('#guests').value; state.guestInfo = { name, email, phone: ($('#phone').value||'').trim(), requests: ($('#requests').value||'').trim() }; updateSummary(); goTo(3); }
 function copyPaymentInfo(){ const num = document.getElementById('ewalletNumber').textContent.trim(); if(!navigator.clipboard){ const ta = document.createElement('textarea'); ta.value = num; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); alert('Number copied to clipboard'); } catch(e){ alert('Copy failed. Number: ' + num); } document.body.removeChild(ta); return; } navigator.clipboard.writeText(num).then(()=>alert('E-wallet number copied to clipboard'), ()=>alert('Could not copy. Number: ' + num)); }
-function confirmBooking(){ if(state.pm==='card'){ if(!$('#cardname').value.trim()||!$('#cardnumber').value.trim()){ alert('Enter card details or choose Pay on Arrival / E-Wallet.'); return; } } else if(state.pm === 'ewallet'){ const confirmSent = confirm(`Please confirm you have sent the payment to:\n\nHotelEase\n09978606886\n\nClick OK if you have already sent the payment and want to proceed. Otherwise click Cancel to review payment instructions.`); if(!confirmSent){ return; } } const booking = { room: state.selected?.id||'—', checkin:state.checkin, checkout:state.checkout, nights:nightsBetween(state.checkin,state.checkout), total:$('#total').textContent, guest: state.guestInfo, paymentMethod: state.pm };
-  const bookings = JSON.parse(localStorage.getItem('hotelBookings') || '[]'); bookings.push({ roomNumber: Math.floor(Math.random() * 400) + 101, ...booking }); localStorage.setItem('hotelBookings', JSON.stringify(bookings)); console.log('booking',booking); alert(`Booking confirmed!\n\n${booking.room}\n${booking.checkin} → ${booking.checkout}\nTotal: ${booking.total}\nPayment: ${booking.paymentMethod}`); location.href = "{{ route('home') }}"; }
+function confirmBooking(){
+  if(state.pm==='card'){ if(!$('#cardname').value.trim()||!$('#cardnumber').value.trim()){ alert('Enter card details or choose Pay on Arrival / E-Wallet.'); return; } }
+  else if(state.pm === 'ewallet'){ const confirmSent = confirm(`Please confirm you have sent the payment to:\n\nHotelEase\n09978606886\n\nClick OK if you have already sent the payment and want to proceed. Otherwise click Cancel to review payment instructions.`); if(!confirmSent){ return; } }
+  const fd = new FormData();
+  fd.append('room_id', state.selected?.id||'');
+  fd.append('guest_name', $('#fullname').value.trim());
+  fd.append('guest_email', $('#email').value.trim());
+  fd.append('check_in_date', $('#checkin').value);
+  fd.append('check_out_date', $('#checkout').value);
+  fd.append('payment_method', state.pm);
+  fd.append('notes', ($('#requests').value||'').trim());
+  const token = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+  fetch("{{ route('book-now') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': token }, body: fd })
+    .then(r => { if(!r.ok) throw new Error('Failed'); return r.json(); })
+    .then(data => {
+      const overlay = document.getElementById('submitOverlay');
+      const receiptBtn = document.getElementById('receiptBtn');
+      const hint = document.getElementById('receiptHint');
+      receiptBtn.href = "{{ url('/receipt') }}/" + data.id;
+      hint.textContent = `Receipt #${data.id}`;
+      overlay.style.display = 'flex';
+      setTimeout(() => { window.location.href = "{{ route('home') }}"; }, 6000);
+    })
+    .catch(() => alert('Could not submit booking'));
+}
 function initFromQuery(){ const qp = new URLSearchParams(location.search); const pre = qp.get('room'); populateRooms(); if(pre){ const match = rooms.find(r=>r.id.toLowerCase()===pre.toLowerCase()); if(match) selectRoom(match.id,match.price); else selectRoom(pre,0); } $('#checkin').addEventListener('change', e => { state.checkin = e.target.value; updateSummary(); }); $('#checkout').addEventListener('change', e => { state.checkout = e.target.value; updateSummary(); }); $('#guests').addEventListener('change', e => { state.guests = e.target.value; updateProceedButtonState(); }); ['#fullname','#email','#phone','#requests'].forEach(sel=>{ const el = document.querySelector(sel); if(el) el.addEventListener('input', updateProceedButtonState); }); updateSummary(); updateProceedButtonState(); }
 document.addEventListener('change', e=>{ if(e.target.name==='pm'){ state.pm=e.target.value; document.getElementById('cardFields').style.display = state.pm==='card' ? 'block' : 'none'; document.getElementById('ewalletFields').style.display = state.pm==='ewallet' ? 'block' : 'none'; } updateProceedButtonState(); });
 initFromQuery();
 </script>
 </body>
 </html>
-
