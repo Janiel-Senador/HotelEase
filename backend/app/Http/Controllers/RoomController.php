@@ -36,7 +36,7 @@ class RoomController extends Controller
             ], 422);
         }
         $data = $request->validate([
-            'number' => 'required|string|max:50|unique:rooms,number',
+            'number' => ['required','regex:/^\\d+$/','unique:rooms,number'],
             'type' => 'required|string|max:50',
             'capacity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
@@ -45,7 +45,10 @@ class RoomController extends Controller
         ]);
 
         $room = Room::create($data);
-        return response()->json($room, 201);
+        if ($request->expectsJson()) {
+            return response()->json($room, 201);
+        }
+        return redirect()->back()->with('status', 'Added Successfully');
     }
 
     /**
@@ -70,7 +73,7 @@ class RoomController extends Controller
     public function update(Request $request, Room $room)
     {
         $data = $request->validate([
-            'number' => 'sometimes|required|string|max:50|unique:rooms,number,' . $room->id,
+            'number' => ['sometimes','required','regex:/^\\d+$/','unique:rooms,number,' . $room->id],
             'type' => 'sometimes|required|string|max:50',
             'capacity' => 'sometimes|required|integer|min:1',
             'price' => 'sometimes|required|numeric|min:0',
@@ -79,7 +82,10 @@ class RoomController extends Controller
         ]);
 
         $room->update($data);
-        return response()->json($room);
+        if ($request->expectsJson()) {
+            return response()->json($room);
+        }
+        return redirect()->back()->with('status', 'Saved');
     }
 
     /**
@@ -88,6 +94,6 @@ class RoomController extends Controller
     public function destroy(Room $room)
     {
         $room->delete();
-        return response()->noContent();
+        return redirect()->back()->with('status', 'Deleted Successfully');
     }
 }

@@ -23,9 +23,12 @@
         .services { padding: 60px 20px; background-color: #ffffff; }
         .services h2 { font-size: 36px; text-align: center; margin-bottom: 50px; color: #333; }
         .rooms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
-        .room-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s; }
-        .room-card:hover { transform: translateY(-8px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .room-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 300ms, box-shadow 300ms; opacity:0; transform: translateY(16px); }
+        .room-card.in { opacity:1; transform: translateY(0); }
+        .room-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         .room-image { width: 100%; height: 200px; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px; position: relative; }
+        .room-image::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg, rgba(139,69,19,0.25), rgba(139,69,19,0.45)); opacity:0; transition:opacity 300ms; }
+        .room-card:hover .room-image::after { opacity:1; }
         .room-badge { position: absolute; top: 10px; right: 10px; background-color: #8B4513; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
         .room-info { padding: 25px; }
         .room-info h3 { font-size: 22px; color: #333; margin-bottom: 12px; }
@@ -229,4 +232,11 @@
         </div>
     </footer>
 </body>
+<script>
+  (function(){
+    var cards = document.querySelectorAll('.room-card');
+    var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.15 });
+    cards.forEach(function(c){ io.observe(c); });
+  })();
+</script>
 </html>

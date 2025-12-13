@@ -13,6 +13,7 @@ class Booking extends Model
         'check_in_date',
         'check_out_date',
         'status',
+        'payment_method',
         'notes',
     ];
 

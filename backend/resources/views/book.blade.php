@@ -24,14 +24,15 @@
   .container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:20px}
   .card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
   .steps{display:flex;gap:10px;margin-bottom:18px}
-  .step{flex:1;padding:10px;border-radius:6px;background:#fff;border:1px solid #efefef;font-size:13px;display:flex;align-items:center;gap:10px}
-  .step.active{background:linear-gradient(90deg,var(--light-brown),var(--brown));color:#fff;border-color:transparent}
+  .step{flex:1;padding:10px;border-radius:6px;background:#fff;border:1px solid #efefef;font-size:13px;display:flex;align-items:center;gap:10px;transition:transform 250ms, box-shadow 250ms}
+  .step.active{background:linear-gradient(90deg,var(--light-brown),var(--brown));color:#fff;border-color:transparent;transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.08)}
   h2{font-size:18px;margin-bottom:12px}
   label{display:block;font-size:13px;margin:8px 0 6px}
   input[type=text], input[type=date], input[type=email], input[type=tel], select, textarea { width:100%;padding:10px;border:1px solid #e2e2e2;border-radius:6px;font-size:14px;background:#fff; }
   .rows{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   .rooms-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
-  .room-item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;border:1px solid #eee}
+  .room-item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;border:1px solid #eee;transition:border-color 250ms, transform 250ms, box-shadow 250ms}
+  .room-item:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.06)}
   .room-item img{width:84px;height:56px;object-fit:cover;border-radius:6px;background:linear-gradient(135deg,var(--light-brown),#c89b7b)}
   .room-meta{flex:1}
   .room-meta h4{margin:0 0 6px;font-size:15px}
@@ -40,11 +41,14 @@
   .summary{position:sticky;top:24px}
   .summary .small{font-size:13px;color:#666;margin-bottom:8px}
   .price{font-weight:700;color:var(--brown);font-size:20px}
-  .btn{background:var(--brown);color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-weight:600}
+  .btn{background:var(--brown);color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-weight:600;transition:transform 180ms, box-shadow 180ms}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,0.08)}
   .btn.secondary{background:#fff;color:var(--brown);border:1px solid #e0d7d0}
   .muted{color:#777;font-size:13px}
   .split{display:flex;gap:10px}
   .hidden{display:none}
+  .fade-in{animation:fadeInUp 280ms ease}
+  @keyframes fadeInUp{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:translateY(0) } }
   .info-box{background:#fff8f2;border:1px solid #f0d8c7;padding:10px;border-radius:8px;color:#5a3b23;font-size:14px}
   .copy-btn{background:transparent;border:1px solid var(--brown);color:var(--brown);padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600}
   @media(max-width:600px){.topbar .nav-inner{padding:0 12px} .top-links a{padding:6px 8px;font-size:13px} .rows{grid-template-columns:1fr}}
@@ -114,7 +118,7 @@
         <div class="rows">
           <div>
             <label for="fullname">Full Name</label>
-            <input id="fullname" type="text" placeholder="Enter your full name" />
+            <input id="fullname" type="text" placeholder="Enter your full name" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" />
           </div>
           <div>
             <label for="email">Email Address</label>
@@ -123,7 +127,7 @@
         </div>
         <div style="margin-top:12px">
           <label for="phone">Phone Number</label>
-          <input id="phone" type="tel" placeholder="63+ 998 765 4321" />
+          <input id="phone" type="tel" inputmode="numeric" pattern="\d+" placeholder="63+ 998 765 4321" oninput="this.value=this.value.replace(/[^\d]/g,'')" />
         </div>
         <div style="margin-top:12px">
           <label for="requests">Special Requests</label>
@@ -146,16 +150,16 @@
         <div id="cardFields">
           <div style="margin-top:8px">
             <label for="cardname">Cardholder Name</label>
-            <input id="cardname" type="text" placeholder="Name on card" />
+            <input id="cardname" type="text" placeholder="Name on card" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" />
           </div>
           <div class="rows" style="margin-top:8px">
             <div>
               <label for="cardnumber">Card Number</label>
-              <input id="cardnumber" type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+              <input id="cardnumber" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this)" />
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <input id="expiry" type="text" placeholder="MM/YY" />
-              <input id="cvv" type="text" placeholder="CVV" maxlength="4" />
+              <input id="expiry" type="text" inputmode="numeric" placeholder="MM/YY" maxlength="5" oninput="formatExpiry(this)" />
+              <input id="cvv" type="text" inputmode="numeric" placeholder="CVV" maxlength="4" oninput="this.value=this.value.replace(/[^\d]/g,'')" />
             </div>
           </div>
         </div>
@@ -180,7 +184,7 @@
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:18px;align-items:center">
           <button class="btn secondary" onclick="goTo(2)">Back</button>
-          <button class="btn" onclick="confirmBooking()">Confirm & Book Now</button>
+          <button id="bookNowBtn" class="btn" onclick="confirmBooking()">Confirm & Book Now</button>
         </div>
       </div>
     </div>
@@ -203,9 +207,7 @@
         <hr style="border:none;border-top:1px dashed #eee;margin:12px 0">
         <div style="display:flex;justify-content:space-between"><div style="font-weight:700">Total</div><div class="price" id="total">₱0</div></div>
       </div>
-      <div style="margin-top:14px;text-align:center">
-        <button id="proceedBtn" class="btn" onclick="proceedToPayment()" title="Complete steps 1 & 2 to proceed">Proceed to Payment</button>
-      </div>
+      
     </div>
     <div style="height:14px"></div>
     <div class="card" style="text-align:center">
@@ -230,6 +232,30 @@
   <style>
     .btn{cursor:pointer}
   </style>
+</div>
+
+<div id="paymentConfirm" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:24px;width:92%;max-width:520px;text-align:center">
+    <h2 style="margin:0 0 6px;color:#8B4513">Confirm Payment</h2>
+    <div id="paymentConfirmText" style="color:#666;margin-bottom:16px"></div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button id="confirmCancel" class="btn secondary" type="button">Cancel</button>
+      <button id="confirmProceed" class="btn" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="notifyModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:24px;width:92%;max-width:520px;text-align:center">
+    <h2 style="margin:0 0 6px;color:#8B4513">Notice</h2>
+    <div id="notifyText" style="color:#666;margin-bottom:16px"></div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button id="notifyClose" class="btn secondary" type="button">Close</button>
+      <button id="notifyOk" class="btn" type="button">OK</button>
+    </div>
+  </div>
+  <style>.btn{cursor:pointer}</style>
+  <script>document.getElementById('notifyClose').onclick=function(){ document.getElementById('notifyModal').style.display='none'; };</script>
 </div>
 
 <footer id="contact" style="background-color:#8B6F47;color:white;padding:40px 20px;text-align:center">
@@ -275,24 +301,32 @@ const roomInfo = {
   'Penthouse Suite': { desc: 'Top-floor luxury & concierge', image: '/Penthouse.png' },
 };
 let state = {step:1,selected: null,checkin:null,checkout:null,guests:1,guestInfo:{},pm:'card'};
+let isSubmitting = false;
 function $(s){return document.querySelector(s)}
 function populateRooms(){ const list = $('#roomsList'); list.innerHTML=''; rooms.forEach(r=>{ const info = roomInfo[r.type] || { desc: '', image: '/StandardRoom.png' }; const div = document.createElement('div'); div.className='room-item'; div.innerHTML = `<img alt="${r.type}" src="${info.image}" /><div class=\"room-meta\"><h4>${r.type}</h4><p>${info.desc}</p></div>
       <div style=\"text-align:right\"><div class=\"muted\">₱${r.price}/night</div>
-      <div style=\"margin-top:8px\"><button class=\"select-room\" data-id=\"${r.id}\" data-label=\"${r.type}\" data-price=\"${r.price}\">Select</button></div></div>`; list.appendChild(div); }); list.querySelectorAll('.select-room').forEach(btn=>{ btn.addEventListener('click',()=> { const id=+btn.dataset.id; const price=+btn.dataset.price; const label=btn.dataset.label; selectRoom({id,price,label}); }); }); }
-function selectRoom(sel){ const room = rooms.find(r => r.id === sel.id); state.selected={id:sel.id,label:sel.label,price:sel.price,image:room?.image||''}; $('#summaryRoom').textContent = sel.label; $('#summaryImage').src = state.selected.image; updateSummary(); document.querySelectorAll('.room-item').forEach(it => it.style.borderColor='#eee'); const btn = document.querySelector(`.select-room[data-id="${sel.id}"]`); if(btn) btn.closest('.room-item').style.borderColor='rgba(139,69,19,0.9)'; updateProceedButtonState(); }
+      <div style=\"margin-top:8px\"><button class=\"select-room\" data-id=\"${r.id}\" data-label=\"${r.type}\" data-type=\"${r.type}\" data-price=\"${r.price}\">Select</button></div></div>`; list.appendChild(div); }); list.querySelectorAll('.select-room').forEach(btn=>{ btn.addEventListener('click',()=> { const id=+btn.dataset.id; const price=+btn.dataset.price; const label=btn.dataset.label; const type=btn.dataset.type; selectRoom({id,price,label,type}); }); }); }
+function selectRoom(sel){ const info = roomInfo[sel.type] || { image: '/StandardRoom.png' }; state.selected={id:sel.id,label:sel.label,price:sel.price,type:sel.type,image:info.image}; $('#summaryRoom').textContent = sel.label; $('#summaryImage').src = state.selected.image; updateSummary(); document.querySelectorAll('.room-item').forEach(it => it.style.borderColor='#eee'); const btn = document.querySelector(`.select-room[data-id="${sel.id}"]`); if(btn){ const card = btn.closest('.room-item'); card.style.borderColor='rgba(139,69,19,0.9)'; card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in'); } updateProceedButtonState(); }
 function nightsBetween(ci,co){ if(!ci||!co) return 0; const a=new Date(ci), b=new Date(co); const diff=(b-a)/(1000*60*60*24); return diff>0?diff:0; }
 function updateSummary(){ const nights = nightsBetween(state.checkin,state.checkout); $('#nights').textContent = nights; const price = state.selected ? state.selected.price : 0; $('#roomPrice').textContent = `₱${price}/night`; const subtotal = nights * price; const taxes = Math.round(subtotal * 0.12); $('#taxes').textContent = `₱${taxes}`; $('#total').textContent = `₱${(subtotal + taxes).toLocaleString()}`; $('#summaryDates').textContent = state.checkin && state.checkout ? `${state.checkin} → ${state.checkout}` : 'Select dates'; updateProceedButtonState(); }
 function canProceedToPayment(){ const ci = $('#checkin').value, co = $('#checkout').value; if(!ci || !co) return false; if(nightsBetween(ci,co) <= 0) return false; if(!state.selected) return false; const name = $('#fullname').value ? $('#fullname').value.trim() : ''; const email = $('#email').value ? $('#email').value.trim() : ''; if(!name || !email) return false; return true; }
 function updateProceedButtonState(){ const btn = $('#proceedBtn'); if(!btn) return; if(canProceedToPayment()){ btn.disabled = false; btn.title = "Proceed to payment"; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; } else { btn.disabled = true; btn.title = "Complete steps 1 & 2 to proceed"; btn.style.opacity = '0.7'; btn.style.cursor = 'not-allowed'; } }
-function goTo(n){ state.step = n; $('#step1').classList.toggle('hidden', n!==1); $('#step2').classList.toggle('hidden', n!==2); $('#step3').classList.toggle('hidden', n!==3); $('#stepLabel1').classList.toggle('active', n===1); $('#stepLabel2').classList.toggle('active', n===2); $('#stepLabel3').classList.toggle('active', n===3); window.scrollTo({top:0,behavior:'smooth'}); }
+function goTo(n){ state.step = n; $('#step1').classList.toggle('hidden', n!==1); $('#step2').classList.toggle('hidden', n!==2); $('#step3').classList.toggle('hidden', n!==3); const activeId = n===1?'#step1':n===2?'#step2':'#step3'; const el = document.querySelector(activeId); if(el){ el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); } $('#stepLabel1').classList.toggle('active', n===1); $('#stepLabel2').classList.toggle('active', n===2); $('#stepLabel3').classList.toggle('active', n===3); window.scrollTo({top:0,behavior:'smooth'}); }
 function prevStep(){ if(state.step>1) goTo(state.step-1) }
 function nextFromStep1(){ const ci = $('#checkin').value, co = $('#checkout').value; if(!ci||!co){alert('Please choose check-in and check-out dates.');return} if(nightsBetween(ci,co)<=0){alert('Check-out must be after check-in.');return} if(!state.selected){alert('Please select a room from the available rooms.');return} state.checkin=ci; state.checkout=co; state.guests = $('#guests').value; updateSummary(); goTo(2); }
-function validateGuest(){ const name=$('#fullname').value.trim(), email=$('#email').value.trim(), phone=$('#phone').value.trim(); if(!name||!email){alert('Please enter name and email.');return} state.guestInfo={name,email,phone,requests:$('#requests').value.trim()}; goTo(3); }
+function openNotify(msg, onOk){ const m=document.getElementById('notifyModal'); document.getElementById('notifyText').textContent=msg; m.style.display='flex'; var ok=document.getElementById('notifyOk'); ok.onclick=function(){ m.style.display='none'; if(typeof onOk==='function'){ onOk(); } } }
+function validateGuest(){ const name=$('#fullname').value.trim(), email=$('#email').value.trim(), phone=$('#phone').value.trim(); if(!name||!email){ document.getElementById('guests').value='1 Guest'; state.guests='1 Guest'; updateProceedButtonState(); openNotify('Please enter name and email.', null); return } if(!email.includes('@')){ document.getElementById('guests').value='1 Guest'; state.guests='1 Guest'; updateProceedButtonState(); openNotify('Email must contain @', null); return } state.guestInfo={name,email,phone,requests:$('#requests').value.trim()}; openNotify('Proceed to payment?', function(){ goTo(3); }); }
 function proceedToPayment(){ const ci = $('#checkin').value, co = $('#checkout').value; if(!ci || !co){ alert('Please choose check-in and check-out dates before proceeding.'); goTo(1); return; } if(nightsBetween(ci,co) <= 0){ alert('Check-out must be after check-in.'); goTo(1); return; } if(!state.selected){ alert('Please select a room from the available rooms before proceeding.'); goTo(1); return; } const name = $('#fullname').value ? $('#fullname').value.trim() : ''; const email = $('#email').value ? $('#email').value.trim() : ''; if(!name || !email){ alert('Please enter guest name and email before proceeding to payment.'); goTo(2); return; } state.checkin = ci; state.checkout = co; state.guests = $('#guests').value; state.guestInfo = { name, email, phone: ($('#phone').value||'').trim(), requests: ($('#requests').value||'').trim() }; updateSummary(); goTo(3); }
 function copyPaymentInfo(){ const num = document.getElementById('ewalletNumber').textContent.trim(); if(!navigator.clipboard){ const ta = document.createElement('textarea'); ta.value = num; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); alert('Number copied to clipboard'); } catch(e){ alert('Copy failed. Number: ' + num); } document.body.removeChild(ta); return; } navigator.clipboard.writeText(num).then(()=>alert('E-wallet number copied to clipboard'), ()=>alert('Could not copy. Number: ' + num)); }
-function confirmBooking(){
-  if(state.pm==='card'){ if(!$('#cardname').value.trim()||!$('#cardnumber').value.trim()){ alert('Enter card details or choose Pay on Arrival / E-Wallet.'); return; } }
-  else if(state.pm === 'ewallet'){ const confirmSent = confirm(`Please confirm you have sent the payment to:\n\nHotelEase\n09978606886\n\nClick OK if you have already sent the payment and want to proceed. Otherwise click Cancel to review payment instructions.`); if(!confirmSent){ return; } }
+function formatCardNumber(el){ const v = el.value.replace(/\D/g,'').slice(0,16); const parts = v.match(/.{1,4}/g); el.value = parts ? parts.join(' ') : v; }
+function formatExpiry(el){ let v = el.value.replace(/[^0-9]/g,'').slice(0,4); if(v.length>=2){ let m = v.slice(0,2); let mi = parseInt(m,10); if(mi<1) m='01'; if(mi>12) m='12'; const y = v.slice(2); el.value = y ? m + '/' + y : m; } else { el.value = v; } }
+function submitBooking(){
+  if(isSubmitting) return;
+  isSubmitting = true;
+  const confirmBtn = document.getElementById('confirmProceed');
+  const bookBtn = document.getElementById('bookNowBtn');
+  if(confirmBtn) confirmBtn.disabled = true;
+  if(bookBtn) bookBtn.disabled = true;
   const fd = new FormData();
   fd.append('room_id', state.selected?.id||'');
   fd.append('guest_name', $('#fullname').value.trim());
@@ -305,17 +339,44 @@ function confirmBooking(){
   fetch("{{ route('book-now') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': token }, body: fd })
     .then(r => { if(!r.ok) throw new Error('Failed'); return r.json(); })
     .then(data => {
+      document.getElementById('paymentConfirm').style.display = 'none';
       const overlay = document.getElementById('submitOverlay');
       const receiptBtn = document.getElementById('receiptBtn');
       const hint = document.getElementById('receiptHint');
-      receiptBtn.href = "{{ url('/receipt') }}/" + data.id;
+      receiptBtn.href = "{{ url('/receipt') }}" + "/" + data.id;
       hint.textContent = `Receipt #${data.id}`;
       overlay.style.display = 'flex';
       setTimeout(() => { window.location.href = "{{ route('home') }}"; }, 6000);
     })
-    .catch(() => alert('Could not submit booking'));
+    .catch(() => { alert('Could not submit booking'); if(confirmBtn) confirmBtn.disabled = false; if(bookBtn) bookBtn.disabled = false; isSubmitting = false; });
 }
-function initFromQuery(){ const qp = new URLSearchParams(location.search); const pre = qp.get('room'); populateRooms(); if(pre){ const match = rooms.find(r=>r.id.toLowerCase()===pre.toLowerCase()); if(match) selectRoom(match.id,match.price); else selectRoom(pre,0); } $('#checkin').addEventListener('change', e => { state.checkin = e.target.value; updateSummary(); }); $('#checkout').addEventListener('change', e => { state.checkout = e.target.value; updateSummary(); }); $('#guests').addEventListener('change', e => { state.guests = e.target.value; updateProceedButtonState(); }); ['#fullname','#email','#phone','#requests'].forEach(sel=>{ const el = document.querySelector(sel); if(el) el.addEventListener('input', updateProceedButtonState); }); updateSummary(); updateProceedButtonState(); }
+function openPaymentConfirm(){
+  const modal = document.getElementById('paymentConfirm');
+  const text = document.getElementById('paymentConfirmText');
+  if(state.pm === 'card'){
+    text.textContent = 'Proceed with Credit/Debit Card payment?';
+  } else if(state.pm === 'ewallet'){
+    text.textContent = 'Confirm you have sent the E-Wallet payment and proceed?';
+  } else {
+    text.textContent = 'Proceed with Pay on Arrival?';
+  }
+  modal.style.display = 'flex';
+  document.getElementById('confirmCancel').onclick = function(){ modal.style.display = 'none'; };
+  document.getElementById('confirmProceed').onclick = function(){ submitBooking(); };
+}
+function confirmBooking(){
+  // Basic client-side checks remain, but no alerts for card/ewallet
+  if(state.pm==='card'){
+    openPaymentConfirm();
+    return;
+  }
+  if(state.pm==='ewallet'){
+    openPaymentConfirm();
+    return;
+  }
+  submitBooking();
+}
+function initFromQuery(){ const qp = new URLSearchParams(location.search); const pre = qp.get('room'); populateRooms(); if(pre){ const match = rooms.find(r=> String(r.type).toLowerCase() === String(pre).toLowerCase()); if(match){ selectRoom({id:match.id, price:match.price, label:match.type, type:match.type}); } } $('#checkin').addEventListener('change', e => { state.checkin = e.target.value; updateSummary(); }); $('#checkout').addEventListener('change', e => { state.checkout = e.target.value; updateSummary(); }); $('#guests').addEventListener('change', e => { state.guests = e.target.value; updateProceedButtonState(); }); ['#fullname','#email','#phone','#requests'].forEach(sel=>{ const el = document.querySelector(sel); if(el) el.addEventListener('input', updateProceedButtonState); }); updateSummary(); updateProceedButtonState(); }
 document.addEventListener('change', e=>{ if(e.target.name==='pm'){ state.pm=e.target.value; document.getElementById('cardFields').style.display = state.pm==='card' ? 'block' : 'none'; document.getElementById('ewalletFields').style.display = state.pm==='ewallet' ? 'block' : 'none'; } updateProceedButtonState(); });
 initFromQuery();
 </script>

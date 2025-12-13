@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
 
 class BookingController extends Controller
 {
@@ -120,6 +122,12 @@ class BookingController extends Controller
         return redirect()->route('admin.room_management');
     }
 
+    public function adminDelete(Booking $booking)
+    {
+        $booking->delete();
+        return redirect()->route('admin.room_management')->with('status', 'Deleted Successfully');
+    }
+
     /**
      * Display the specified resource.
      */
@@ -162,5 +170,96 @@ class BookingController extends Controller
     {
         $booking->delete();
         return response()->noContent();
+    }
+
+    public function exportHistoryDocx()
+    {
+        $accepted = Booking::whereIn('status', ['confirmed', 'checked_in'])->with('room')->orderByDesc('id')->limit(200)->get();
+        $cancelled = Booking::where('status', 'cancelled')->with('room')->orderByDesc('id')->limit(200)->get();
+
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection();
+        $section->addTitle('Booking History', 1);
+
+        $section->addText('Accepted Bookings');
+        $style = ['borderSize' => 6, 'borderColor' => '999999'];
+        $table = $section->addTable($style);
+        $table->addRow();
+        foreach (['ID','Room Number','Room Type','Guest','Check-in','Check-out','Status'] as $h) { $table->addCell(2000)->addText($h); }
+        foreach ($accepted as $b) {
+            $table->addRow();
+            $table->addCell()->addText((string)$b->id);
+            $table->addCell()->addText((string)optional($b->room)->number);
+            $table->addCell()->addText((string)optional($b->room)->type);
+            $table->addCell()->addText((string)$b->guest_name);
+            $table->addCell()->addText((string)$b->check_in_date);
+            $table->addCell()->addText((string)$b->check_out_date);
+            $table->addCell()->addText((string)$b->status);
+        }
+
+        $section->addTextBreak(1);
+        $section->addText('Cancelled Bookings');
+        $table2 = $section->addTable($style);
+        $table2->addRow();
+        foreach (['ID','Room Number','Room Type','Guest','Check-in','Check-out','Status'] as $h) { $table2->addCell(2000)->addText($h); }
+        foreach ($cancelled as $b) {
+            $table2->addRow();
+            $table2->addCell()->addText((string)$b->id);
+            $table2->addCell()->addText((string)optional($b->room)->number);
+            $table2->addCell()->addText((string)optional($b->room)->type);
+            $table2->addCell()->addText((string)$b->guest_name);
+            $table2->addCell()->addText((string)$b->check_in_date);
+            $table2->addCell()->addText((string)$b->check_out_date);
+            $table2->addCell()->addText((string)$b->status);
+        }
+
+        $writer = IOFactory::createWriter($phpWord, 'Word2007');
+        $tmp = tempnam(sys_get_temp_dir(), 'history_');
+        $file = $tmp . '.docx';
+        $writer->save($file);
+        $name = 'booking_history_' . now()->toDateString() . '.docx';
+        return response()->download($file, $name)->deleteFileAfterSend(true);
+    }
+
+    public function exportHistoryDoc()
+    {
+        $accepted = Booking::whereIn('status', ['confirmed', 'checked_in'])->with('room')->orderByDesc('id')->limit(200)->get();
+        $cancelled = Booking::where('status', 'cancelled')->with('room')->orderByDesc('id')->limit(200)->get();
+        $html = '<html><head><meta charset="utf-8"><title>Booking History</title></head><body>';
+        $html .= '<h1>Booking History</h1>';
+        $html .= '<h2>Accepted Bookings</h2>';
+        $html .= '<table border="1" cellpadding="6" cellspacing="0"><tr><th>ID</th><th>Room Number</th><th>Room Type</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr>';
+        foreach ($accepted as $b) {
+            $html .= '<tr>'
+                . '<td>' . e($b->id) . '</td>'
+                . '<td>' . e(optional($b->room)->number) . '</td>'
+                . '<td>' . e(optional($b->room)->type) . '</td>'
+                . '<td>' . e($b->guest_name) . '</td>'
+                . '<td>' . e($b->check_in_date) . '</td>'
+                . '<td>' . e($b->check_out_date) . '</td>'
+                . '<td>' . e($b->status) . '</td>'
+                . '</tr>';
+        }
+        $html .= '</table>';
+        $html .= '<h2>Cancelled Bookings</h2>';
+        $html .= '<table border="1" cellpadding="6" cellspacing="0"><tr><th>ID</th><th>Room Number</th><th>Room Type</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr>';
+        foreach ($cancelled as $b) {
+            $html .= '<tr>'
+                . '<td>' . e($b->id) . '</td>'
+                . '<td>' . e(optional($b->room)->number) . '</td>'
+                . '<td>' . e(optional($b->room)->type) . '</td>'
+                . '<td>' . e($b->guest_name) . '</td>'
+                . '<td>' . e($b->check_in_date) . '</td>'
+                . '<td>' . e($b->check_out_date) . '</td>'
+                . '<td>' . e($b->status) . '</td>'
+                . '</tr>';
+        }
+        $html .= '</table>';
+        $html .= '</body></html>';
+        $name = 'booking_history_' . now()->toDateString() . '.doc';
+        return response($html, 200, [
+            'Content-Type' => 'application/msword; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $name . '"'
+        ]);
     }
 }

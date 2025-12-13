@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\RoomSeeder;
 use Database\Seeders\BookingSeeder;
 use Database\Seeders\AdminUserSeeder;
+use Database\Seeders\StaffUserSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -21,5 +22,6 @@ class DatabaseSeeder extends Seeder
         $this->call(RoomSeeder::class);
         $this->call(BookingSeeder::class);
         $this->call(AdminUserSeeder::class);
+        $this->call(StaffUserSeeder::class);
     }
 }

@@ -18,6 +18,13 @@
         .top-links a{ color:#fff; text-decoration:none; font-size:15px; transition:opacity 0.3s; }
         .top-links a:hover{ opacity:0.8; }
         main{ padding:36px 16px; }
+        .menu-btn{margin-left:12px;background:#fff;color:#8B4513;border:1px solid #e0d7d0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700;transition:transform .18s, box-shadow .18s}
+        .menu-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,0.08)}
+        .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform .28s ease;z-index:10;padding:16px;display:flex;flex-direction:column;gap:10px}
+        .sidebar.open{transform:translateX(0)}
+        .sidebar h3{margin:6px 0 10px;color:#8B4513}
+        .sidebar a, .sidebar button{display:block;text-decoration:none;color:#8B4513;border:1px solid #e0d7d0;background:#fff;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600;text-align:left}
+        .sidebar a:hover, .sidebar button:hover{background:#f9f4ef}
         .hero { position: relative; background: url("/img.png") center/cover no-repeat; color: white; text-align: center; padding: 120px 20px; }
         .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(139, 69, 19, 0.5); z-index: 1; filter: blur(5px); }
         .hero h1, .hero p, .hero-btn { position: relative; z-index: 2; }
@@ -51,10 +58,28 @@
         <nav class="top-links" aria-label="Main">
             <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('book') }}">Booking</a>
+            <button class="menu-btn" id="openSidebar">Menu</button>
         </nav>
         </div>
     </div>
     </header>
+
+    <aside class="sidebar" id="sidebar">
+        <h3>Guest Menu</h3>
+        <a href="{{ route('book') }}">Book a Room</a>
+        <a href="{{ route('my_bookings') }}">My Bookings</a>
+        <a href="{{ route('language') }}">Language</a>
+        <a href="{{ route('about') }}">About Us</a>
+        <a href="{{ route('faqs') }}">HotelEase FAQs</a>
+        <a href="{{ route('terms') }}">Terms of Use</a>
+        <a href="{{ route('privacy') }}">Privacy Policy</a>
+        @auth
+            <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit">Sign out</button></form>
+        @else
+            <a href="{{ route('login') }}">Sign in</a>
+            <a href="{{ route('register') }}">Create account</a>
+        @endauth
+    </aside>
 
     <div class="hero" id="home">
         <h1>Experience Comfort, Convenience, and Modern Hospitality</h1>
@@ -119,5 +144,13 @@
             <p>&copy; 2025 HotelEase. All rights reserved.</p>
         </div>
     </footer>
+    <script>
+        (function(){
+            var toggle=document.getElementById('openSidebar');
+            var sb=document.getElementById('sidebar');
+            if(toggle&&sb){ toggle.addEventListener('click',function(){ sb.classList.toggle('open'); }); }
+            document.addEventListener('click',function(e){ if(sb && sb.classList.contains('open')){ if(!sb.contains(e.target) && e.target!==toggle){ sb.classList.remove('open'); } } });
+        })();
+    </script>
 </body>
 </html>
