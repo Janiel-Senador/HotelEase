@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\ServiceAssignmentController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\GuestAdminController;
@@ -50,10 +51,15 @@ Route::middleware('admin')->group(function(){
 
     Route::get('/admin/staff', [StaffController::class, 'index'])->name('admin.staff');
     Route::post('/admin/staff', [StaffController::class, 'store'])->name('admin.staff.store');
-    Route::post('/admin/staff/{user}/update', [StaffController::class, 'update'])->name('admin.staff.update');
-    Route::post('/admin/staff/{user}/deactivate', [StaffController::class, 'deactivate'])->name('admin.staff.deactivate');
-    Route::post('/admin/staff/{user}/activate', [StaffController::class, 'activate'])->name('admin.staff.activate');
-    Route::post('/admin/staff/{user}/delete', [StaffController::class, 'destroy'])->name('admin.staff.delete');
+    Route::post('/admin/staff/{staff}/update', [StaffController::class, 'update'])->name('admin.staff.update');
+    Route::post('/admin/staff/{staff}/deactivate', [StaffController::class, 'deactivate'])->name('admin.staff.deactivate');
+    Route::post('/admin/staff/{staff}/activate', [StaffController::class, 'activate'])->name('admin.staff.activate');      
+    Route::post('/admin/staff/{staff}/delete', [StaffController::class, 'destroy'])->name('admin.staff.delete');
+
+    Route::get('/admin/assignments', [ServiceAssignmentController::class, 'index'])->name('admin.assignments');
+    Route::post('/admin/assignments', [ServiceAssignmentController::class, 'store'])->name('admin.assignments.store');
+    Route::post('/admin/assignments/{assignment}/assign', [ServiceAssignmentController::class, 'assign'])->name('admin.assignments.assign');
+    Route::post('/admin/assignments/{assignment}/status', [ServiceAssignmentController::class, 'updateStatus'])->name('admin.assignments.status');
 
     Route::get('/admin/rooms', function(){ return view('admin_rooms'); })->name('admin.rooms');
     Route::post('/admin/rooms', [RoomController::class, 'store'])->name('admin.rooms.store');

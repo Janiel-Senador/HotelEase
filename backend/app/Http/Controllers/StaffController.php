@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -10,68 +10,59 @@ class StaffController extends Controller
 {
     public function index()
     {
-        $staff = User::where('is_staff', true)->orderByDesc('id')->get();
+        $staff = Staff::orderByDesc('id')->get();
         return view('admin_staff', compact('staff'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'required|email|unique:staffs,email',
+            'username' => 'required|string|max:100|unique:staffs,username',
+            'role' => 'required|string|in:Front Desk,Housekeeping,Maintenance,Manager',
         ]);
-        $user = new User();
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        $user->password = Hash::make($data['password']);
-        $user->is_staff = true;
-        $user->is_active = true;
-        $user->save();
+        $s = new Staff($data);
+        $s->is_active = true;
+        $s->save();
         return redirect()->back()->with('status', 'Staff created');
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, Staff $staff)
     {
         $data = $request->validate([
-            'name' => 'nullable|string|max:100',
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:6',
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'email' => 'nullable|email|unique:staffs,email,' . $staff->id,
+            'username' => 'nullable|string|max:100|unique:staffs,username,' . $staff->id,
+            'role' => 'nullable|string|in:Front Desk,Housekeeping,Maintenance,Manager',
             'is_active' => 'nullable|boolean',
         ]);
-        if (isset($data['name'])) $user->name = $data['name'];
-        if (isset($data['email'])) $user->email = $data['email'];
-        if (!empty($data['password'])) $user->password = Hash::make($data['password']);
-        if (isset($data['is_active'])) $user->is_active = (bool) $data['is_active'];
-        $user->is_staff = true;
-        $user->save();
+        foreach ($data as $k => $v) {
+            if ($v !== null && $v !== '') { $staff->$k = $v; }
+        }
+        $staff->save();
         return redirect()->back()->with('status', 'Staff updated');
     }
 
-    public function deactivate(User $user)
+    public function deactivate(Staff $staff)
     {
-        // prevent deactivating default admin account
-        if (strtolower($user->name) === 'admin') {
-            return redirect()->back()->with('status', 'Cannot deactivate admin');
-        }
-        $user->is_active = false;
-        $user->save();
+        $staff->is_active = false;
+        $staff->save();
         return redirect()->back()->with('status', 'Staff deactivated');
     }
 
-    public function activate(User $user)
+    public function activate(Staff $staff)
     {
-        $user->is_active = true;
-        $user->save();
+        $staff->is_active = true;
+        $staff->save();
         return redirect()->back()->with('status', 'Staff activated');
     }
 
-    public function destroy(User $user)
+    public function destroy(Staff $staff)
     {
-        if (strtolower($user->name) === 'admin') {
-            return redirect()->back()->with('status', 'Cannot delete admin');
-        }
-        $user->delete();
+        $staff->delete();
         return redirect()->back()->with('status', 'Staff deleted');
     }
 }

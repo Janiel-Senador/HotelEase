@@ -15,7 +15,9 @@
         input{width:100%;padding:10px;border:1px solid rgba(255,255,255,0.08);background:#0b1220;color:var(--text);border-radius:8px}
         .btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
         .table{margin-top:8px}
-        .th,.tr{display:grid;grid-template-columns:1.4fr 1.6fr 1fr 1fr 0.9fr;gap:10px;align-items:center}
+        .th,.tr{display:grid;grid-template-columns:1fr 1fr 1.6fr 1fr 1fr 0.9fr 0.9fr;gap:10px;align-items:center}
+        .update-form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+        .update-form .btn{grid-column:1/-1}
         .th{font-size:12px;color:var(--muted);padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.07)}
         .tr{padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
         .muted{color:var(--muted);font-size:12px}
@@ -30,28 +32,43 @@
             <div class="title">Create Staff</div>
             <form method="POST" action="{{ route('admin.staff.store') }}">
                 @csrf
-                <label for="name">Name</label>
-                <input id="name" name="name" type="text" required />
+                <label for="first_name">First Name</label>
+                <input id="first_name" name="first_name" type="text" required />
+                <label for="last_name">Last Name</label>
+                <input id="last_name" name="last_name" type="text" required />
                 <label for="email">Email</label>
                 <input id="email" name="email" type="email" required />
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" required />
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" required />
+                <label for="role">Role</label>
+                <input id="role" name="role" type="text" list="roles" placeholder="Front Desk, Housekeeping, Maintenance, Manager" required />
+                <datalist id="roles">
+                    <option value="Front Desk"></option>
+                    <option value="Housekeeping"></option>
+                    <option value="Maintenance"></option>
+                    <option value="Manager"></option>
+                </datalist>
                 <div style="margin-top:12px"><button class="btn" type="submit">Create</button></div>
             </form>
         </div>
         <div class="card">
             <div class="title">Staff Accounts</div>
             <div class="th">
-                <div>Name</div>
+                <div>First Name</div>
+                <div>Last Name</div>
                 <div>Email</div>
+                <div>Username</div>
+                <div>Role</div>
                 <div>Status</div>
                 <div>Actions</div>
-                <div>Update</div>
             </div>
             @forelse($staff as $u)
                 <div class="tr">
-                    <div>{{ $u->name }}</div>
+                    <div>{{ $u->first_name }}</div>
+                    <div>{{ $u->last_name }}</div>
                     <div>{{ $u->email }}</div>
+                    <div>{{ $u->username }}</div>
+                    <div>{{ $u->role }}</div>
                     <div>{{ $u->is_active ? 'Active' : 'Inactive' }}</div>
                     <div class="actions">
                         @if($u->is_active)
@@ -61,14 +78,16 @@
                         @endif
                         <form method="POST" action="{{ route('admin.staff.delete', $u) }}">@csrf<button class="btn secondary" type="submit">Delete</button></form>
                     </div>
-                    <div>
-                        <form method="POST" action="{{ route('admin.staff.update', $u) }}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                    <div style="grid-column:1/-1; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07)">
+                        <form method="POST" action="{{ route('admin.staff.update', $u) }}" class="update-form">
                             @csrf
-                            <input name="name" type="text" placeholder="Name" value="{{ $u->name }}" />
+                            <input name="first_name" type="text" placeholder="First Name" value="{{ $u->first_name }}" /> 
+                            <input name="last_name" type="text" placeholder="Last Name" value="{{ $u->last_name }}" />    
                             <input name="email" type="email" placeholder="Email" value="{{ $u->email }}" />
-                            <input name="password" type="password" placeholder="New Password" />
+                            <input name="username" type="text" placeholder="Username" value="{{ $u->username }}" />       
+                            <input name="role" type="text" placeholder="Role" value="{{ $u->role }}" list="roles" />
                             <input type="hidden" name="is_active" value="{{ $u->is_active ? 1 : 0 }}" />
-                            <button class="btn" type="submit" style="grid-column:1/-1">Save</button>
+                            <button class="btn" type="submit">Save</button>
                         </form>
                     </div>
                 </div>
@@ -80,4 +99,3 @@
 </div>
 </body>
 </html>
-

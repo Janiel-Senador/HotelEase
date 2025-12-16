@@ -20,9 +20,9 @@
         main{ padding:36px 16px; }
         .menu-btn{margin-left:12px;background:#fff;color:#8B4513;border:1px solid #e0d7d0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700;transition:transform .18s, box-shadow .18s}
         .menu-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,0.08)}
-        .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.15);transform:translateX(-100%);transition:transform .28s ease;z-index:10;padding:16px;display:flex;flex-direction:column;gap:10px}
+        .sidebar{position:fixed;right:0;top:0;bottom:0;width:280px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform .28s ease;z-index:10;padding:16px;display:flex;flex-direction:column;gap:10px}
         .sidebar.open{transform:translateX(0)}
-        .sidebar h3{margin:6px 0 10px;color:#8B4513}
+        .sidebar h3{margin:6px 0 10px;color:#8B4513}      
         .sidebar a, .sidebar button{display:block;text-decoration:none;color:#8B4513;border:1px solid #e0d7d0;background:#fff;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600;text-align:left}
         .sidebar a:hover, .sidebar button:hover{background:#f9f4ef}
         .hero { position: relative; background: url("/img.png") center/cover no-repeat; color: white; text-align: center; padding: 120px 20px; }

@@ -123,6 +123,7 @@
             <button class="glass-btn" onclick="goSection('#room-mgmt')">Room Management</button>
             <button class="glass-btn" onclick="goSection('#staff')">Staffs</button>
             <button class="glass-btn" onclick="goSection('#guests')">Guests</button>
+            <a class="glass-btn" href="{{ route('admin.assignments') }}" style="text-decoration:none;display:inline-block;line-height:28px">Service Assignments</a>
             <button class="glass-btn" onclick="goSection('#history')">History</button>
         </div>
         <div class="dropdown recursive-menu">
@@ -239,6 +240,42 @@
             
             
         </div>
+            </div>
+        </div>
+
+        <div id="staff" class="section">
+            <div class="card">
+                <div class="section-title">Staffs</div>
+                <div class="content-grid" style="grid-template-columns: 1fr; justify-items: center;">
+                    <div class="card" style="width:min(1050px,96%)">
+                        <div class="card-title">Staff Accounts</div>
+                        <div class="room-table">
+                            @php
+                                try { $staff = \App\Models\Staff::orderByDesc('id')->get(); } catch (\Throwable $e) { $staff = collect(); }
+                            @endphp
+                            @forelse($staff as $u)
+                                <div class="table-row" style="grid-template-columns:1fr 1fr 1.6fr 1fr 1fr 0.8fr 0.8fr">
+                                    <div><span>{{ $u->first_name }}</span> <span class="muted" style="font-size:12px">/ First</span></div>
+                                    <div><span>{{ $u->last_name }}</span> <span class="muted" style="font-size:12px">/ Last</span></div>
+                                    <div><span>{{ $u->email }}</span> <span class="muted" style="font-size:12px">/ Email</span></div>
+                                    <div><span>{{ $u->username }}</span> <span class="muted" style="font-size:12px">/ Username</span></div>
+                                    <div><span>{{ $u->role }}</span> <span class="muted" style="font-size:12px">/ Role</span></div>
+                                    <div><span>{{ $u->is_active ? 'Active' : 'Inactive' }}</span> <span class="muted" style="font-size:12px">/ Status</span></div>
+                                    <div style="display:flex;gap:8px">
+                                        @if($u->is_active)
+                                        <form method="POST" action="{{ route('admin.staff.deactivate', $u) }}">@csrf<button class="glass-btn" type="submit">Deactivate</button></form>
+                                        @else
+                                        <form method="POST" action="{{ route('admin.staff.activate', $u) }}">@csrf<button class="glass-btn" type="submit">Activate</button></form>
+                                        @endif
+                                        <form method="POST" action="{{ route('admin.staff.delete', $u) }}">@csrf<button class="glass-btn" type="submit">Delete</button></form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-state">No staff accounts yet.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
